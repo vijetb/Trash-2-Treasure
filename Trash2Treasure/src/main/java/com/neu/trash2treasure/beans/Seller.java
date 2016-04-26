@@ -1,17 +1,22 @@
 package com.neu.trash2treasure.beans;
 
-import java.util.ArrayList;
+import java.util.List;
 
 public class Seller extends User{
-
-	private ArrayList<Item> itemsRegistered;
+	/**
+	 * List of registered Items
+	 */
+	private List<Item> itemsRegistered;
+	/**
+	 * Amount Owed by the seller.
+	 */
 	private Double amountOwed;
 
-	public ArrayList<Item> getItemsRegistered() {
+	public List<Item> getItemsRegistered() {
 		return itemsRegistered;
 	}
 
-	public void setItemsRegistered(ArrayList<Item> itemsRegistered) {
+	public void setItemsRegistered(List<Item> itemsRegistered) {
 		this.itemsRegistered = itemsRegistered;
 	}
 

@@ -1,12 +1,22 @@
 package com.neu.trash2treasure.beans;
 
+/**
+ * Login Bean
+ * @author Vijet Badigannavar
+ */
 public class Login {
-
+	/**
+	 * Id associated with the user
+	 */
 	private Long id;
+	/**
+	 * NUId associated with the NEU student
+	 */
 	private Long nuID;
+	/**
+	 * Password associated with the User.
+	 */
 	private String password;
-
-	
 
 	public Long getNuID() {
 		return nuID;
@@ -31,7 +41,4 @@ public class Login {
 	public void setId(Long id) {
 		this.id = id;
 	}
-	
-	
-
 }

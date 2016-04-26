@@ -1,17 +1,49 @@
 package com.neu.trash2treasure.beans;
 
+/**
+ * User Bean
+ * @author Vijet Badigannavar
+ **/
 public class User {
-
+	/**
+	 * Id associated with the User
+	 */
 	private Long id;
+	/**
+	 * First name associated with User
+	 */	
 	private String firstName;
+	/**
+	 * Last name associated with User
+	 */	
 	private String lastName;
+	/**
+	 * EmailId of User
+	 */	
 	private String emailId;
+	/**
+	 * NUId of the user
+	 */
 	private Long nuID;
-	//private String userName;
+	/**
+	 * Password associated with the User
+	 */
 	private String password;
+	/**
+	 * Phone number of the user
+	 */
 	private String phoneNumber;
+	/**
+	 * Boolean value of the admin
+	 */
 	private Boolean isAdmin;
+	/**
+	 * Code of the admin
+	 */
 	private String adminCode;
+	/**
+	 * SecurityQuestions and Answers.
+	 */
 	private String securityQuestion1;
 	private String securityAnswer1;
 	private String securityQuestion2;
@@ -57,15 +89,7 @@ public class User {
 	public void setNuID(Long nuID) {
 		this.nuID = nuID;
 	}
-/*
-	public String getUserName() {
-		return userName;
-	}
 
-	public void setUserName(String userName) {
-		this.userName = userName;
-	}
-*/
 	public String getAdminCode() {
 		return adminCode;
 	}
