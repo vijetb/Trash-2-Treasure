@@ -11,7 +11,6 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.apache.commons.fileupload.FileItem;
-import org.apache.commons.fileupload.FileUploadException;
 import org.apache.commons.fileupload.disk.DiskFileItemFactory;
 import org.apache.commons.fileupload.servlet.ServletFileUpload;
 import org.springframework.stereotype.Controller;
@@ -28,22 +27,25 @@ import com.neu.trash2treasure.beans.Seller;
 import com.neu.trash2treasure.beans.User;
 import com.neu.trash2treasure.service.Trash2TreasureService;
 
-/** Trash2TreasureController class acts as the controller in the 
- * Model-View-Controller(MVC) architecture */
-
+/** 
+ * Common Controller to intercept all the clients connections
+ * @author Vijet Badigannavar
+ **/
 @Controller
 @MultipartConfig
 public class Trash2TreasureController {
 
+	/**Memory constants **/
 	private static final int MAX_MEMORY_SIZE = 1024 * 1024 * 10;
 	private static final int MAX_REQUEST_SIZE = 1024 * 1024 * 10;
+	
+	/** Image Count*/
 	private static int imageCount = 0;
 
-	/* Redirect to Registration page */
+	/** Registers the new User to the system */
 	@RequestMapping("/userRegister")
 	protected ModelAndView userRegistration(HttpServletRequest req,
 			HttpServletResponse res) throws Exception {
-		
 		ModelAndView mv = new ModelAndView("Registration");
 		return mv;
 	}
@@ -56,18 +58,19 @@ public class Trash2TreasureController {
 		return mv;
 	}
 	
-	/* Redirect back to Home page from any of the visited pages */
+	/**
+	 * Redirects back to the home page 
+	 */
 	@RequestMapping("/Home/{userInfo}")
 	protected ModelAndView homeRedirect(@PathVariable("userInfo") String userInfo) throws Exception {
-		ModelAndView mv =null;
-		if(userInfo == null)
+		ModelAndView mv = null;
+		if(null==userInfo)
 			mv = new ModelAndView("Login");
 		
 		if(! userInfo.contains("__")){
 			return null;
 		}
 		
-		String user = userInfo.split("__")[0];
 		int nuId = Integer.parseInt(userInfo.split("__")[1]);
 		if(userInfo.contains("Admin")){
 			mv = new ModelAndView("Admin");
@@ -93,29 +96,27 @@ public class Trash2TreasureController {
 		return mv;
 	}
 
-	/* Logout user */
+	/**
+	 * Logout the user.
+	 */
 	@RequestMapping("/Logout/{userInfo}")
 	protected ModelAndView logout(@PathVariable("userInfo") String userInfo) throws Exception {
 		ModelAndView mv =null;
 		mv = new ModelAndView("Login");
-			
 		return mv;
 	}
 
 	
-	/* This method is invoked when a new user submits his registration form.
+	/** User submits a new User registration request. 
 	 * The registration details are pushed to the database.  */
 	@RequestMapping(value = "/registrationSubmission", method = RequestMethod.POST)
-	public ModelAndView registrationSubmission(HttpServletRequest req,
-			HttpServletResponse res, @ModelAttribute("userBean") User userBean) {
-		
+	public ModelAndView registrationSubmission(HttpServletRequest req, HttpServletResponse res, @ModelAttribute("userBean") User userBean) {
 		try {
 			new Trash2TreasureService().registerUser(userBean);
 		} catch (Exception e) {
 			e.printStackTrace();
 			ModelAndView mv = new ModelAndView("Registration");
-			mv.addObject("errorMsg",
-					"Oops,something gone wrong!! Please try again");
+			mv.addObject("errorMsg", "Oops,something gone wrong!! Please try again");
 			return mv;
 		}
 
@@ -125,22 +126,16 @@ public class Trash2TreasureController {
 		} else
 			mv = new ModelAndView("Seller");
 		String isAdmin = (userBean.getIsAdmin() ? "Admin" : "Seller");
-		
 		String userInfo = isAdmin+ "__" + userBean.getNuID();
-		
 		mv.addObject("userInfo", userInfo);
-	
 		mv.addObject("amountOwed","$"+0);
-
 		// to be computed
 		mv.addObject("userIdentification", "verified");
 		return mv;
 
 	}
 
-	/* This method is invoked when the user submits his login credentials.
-	 * The login credentials are verified from the database and accordingly,
-	 * the user is granted the access  */
+	/** Validate the user*/
 	@RequestMapping(value = "/loginUser")
 	public ModelAndView loginUser(HttpServletRequest req,
 			HttpServletResponse res,
@@ -159,12 +154,10 @@ public class Trash2TreasureController {
 			return mv;
 		}
 
-		if (user == null) {
+		if (null==user) {
 			mv = new ModelAndView("Login");
-			mv.addObject("msg",
-					"Oops..Something went wrong..Please try again.Check your NuId and Password..!!");
+			mv.addObject("msg", "Oops..Something went wrong..Please try again.Check your NuId and Password..!!");
 			return mv;
-
 		} else {
 			Boolean isAdmin = user.getIsAdmin();
 			String firstName = user.getFirstName();
@@ -180,34 +173,27 @@ public class Trash2TreasureController {
 				} catch (SQLException e) {
 					e.printStackTrace();
 					mv = new ModelAndView("Login");
-					mv.addObject("msg",
-							"Oops..Something went wrong..Please try again.Check your NuId and Password..!!");
+					mv.addObject("msg","Oops..Something went wrong..Please try again.Check your NuId and Password..!!");
 					return mv;
 				}
 				mv = new ModelAndView(viewName);
-			String userInfo = (isAdmin ? "Admin" : "Seller") + "__"
-					+ loginBean.getNuID();
+				String userInfo = (isAdmin ? "Admin" : "Seller") + "__" + loginBean.getNuID();
 				mv.addObject("userInfo", userInfo);
 				if(viewName.equals("Seller")){
 					if(amountOwed==0)
 						amountOwed=0;
-				
 					mv.addObject("amountOwed","$"+amountOwed);
 				}
 					
 			mv.addObject("username", firstName);
 			mv.addObject("userIdentification", "verified");
 		}
-
 		return mv;
 	}
 
-	/* This method is invoked when a user wants to update his profile information.
-	 * The user will be redirected to the update profile page  */
+	/** Updates the User Profile */
 	@RequestMapping(value = "/UpdateProfile/{userInfo}")
-	public ModelAndView uploadUserProfile(HttpServletRequest req,
-			HttpServletResponse res,@PathVariable("userInfo") String userInfo){
-
+	public ModelAndView uploadUserProfile(HttpServletRequest req, HttpServletResponse res,@PathVariable("userInfo") String userInfo){
 		ModelAndView mv = null;
 		Trash2TreasureService service = new Trash2TreasureService();
 		Double amountOwed=0.0;
@@ -251,8 +237,7 @@ public class Trash2TreasureController {
 
 	}
 
-	/* This method is invoked when a new user submits his updated profile information.
-	 * The updated profile details are pushed to the database.  */
+	/** Updates user information  */
 	@RequestMapping(value = "/UpdateUserInformation")
 	public ModelAndView updateUserInformation(HttpServletRequest req,
 			HttpServletResponse res, @ModelAttribute("userBean") User userBean){
@@ -292,7 +277,6 @@ public class Trash2TreasureController {
 			return mv;
 		}
 		
-		
 		mv = new ModelAndView(viewName);
 
 		mv.addObject("msg", "Profile Information updated successfully..!!");
@@ -300,29 +284,21 @@ public class Trash2TreasureController {
 		if(viewName.equals("Seller"))
 			mv.addObject("amountOwed",amountOwed);
 		mv.addObject("userIdentification", "verified");
-
 		return mv;
-
 	}
 
-	/* This method is invoked when a seller would like to 
-	 * upload an item he wants to sell.
-	 * He will be redirected to the upload item page */
+	/** Seller Uploads an item to his inventory for sale*/
 	@RequestMapping(value = "/UploadItem/{userInfo}")
-	public ModelAndView uploadItem(HttpServletRequest req,
-			HttpServletResponse res, @PathVariable("userInfo") String userInfo){
-
+	public ModelAndView uploadItem(HttpServletRequest req, HttpServletResponse res, @PathVariable("userInfo") String userInfo){
 		ModelAndView mv = new ModelAndView("UploadItem");
 		mv.addObject("userInfo", userInfo);
 		mv.addObject("userIdentification", "verified");
 		return mv;
-
 	}
 
 
-	/* This method is invoked when a seller 
-	 * submits the details of the item he wants to sell. 
-	 *  */
+	/** Seller Uploads an items
+	 */
 	@RequestMapping(value = "/SellerUploadItem", method = RequestMethod.POST)
 	public ModelAndView sellerUploadItem(HttpServletRequest req,
 			HttpServletResponse res, @ModelAttribute("itemBean") Item itemBean) {
@@ -477,11 +453,9 @@ public class Trash2TreasureController {
 	}
 
 
-	/* This method is invoked when a seller would like to 
-	 * modify the details of the item he has already uploaded. */
+	/** modify the item that is uploaded */
 	@RequestMapping(value = "/ModifyItem/{userInfo}")
-	public ModelAndView modifyItem(HttpServletRequest req,
-			HttpServletResponse res,@PathVariable("userInfo") String userInfo) {
+	public ModelAndView modifyItem(HttpServletRequest req, HttpServletResponse res,@PathVariable("userInfo") String userInfo) {
 
 		if(! userInfo.contains("__")){
 			return null;
@@ -489,9 +463,7 @@ public class Trash2TreasureController {
 		Double amountOwed=0.0;
 		// fetch all items of this user and send to this page
 		Trash2TreasureService service = new Trash2TreasureService();
-			
-		boolean isAdmin = (userInfo.split("__")[0]).equals("Admin") ? true
-				: false;
+		boolean isAdmin = (userInfo.split("__")[0]).equals("Admin") ? true: false;
 		int nuID = Integer.parseInt(userInfo.split("__")[1]);
 		
 		ModelAndView mv = null;
@@ -503,8 +475,7 @@ public class Trash2TreasureController {
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
 			mv = new ModelAndView("Seller");
-			mv.addObject("msg",
-					"Oops..Something went wrong..Please try again...!!");
+			mv.addObject("msg", "Oops..Something went wrong..Please try again...!!");
 			mv.addObject("userInfo", userInfo);
 			mv.addObject("userIdentification", "verified");
 			
@@ -518,7 +489,6 @@ public class Trash2TreasureController {
 		String UPLOAD_DIR = "images";
 		String applicationPath = req.getServletContext().getRealPath("");
         // constructs path of the directory to save uploaded file
-        String uploadFilePath = applicationPath + File.separator + UPLOAD_DIR;
         
 		if (sellerItems == null || sellerItems.size() == 0) {
 			mv = new ModelAndView("Seller");
@@ -541,8 +511,7 @@ public class Trash2TreasureController {
 	}
 
 
-	/* This method is invoked when a seller would like to 
-	 * delete an item he has already uploaded */
+	/** Deletes a item from the store */
 	@RequestMapping("/DeleteThisItem/{userInfo}/{itemId}")
 	public ModelAndView deleteThisItem( @PathVariable("itemId") String itemId, 
 			@PathVariable("userInfo") String userInfo){
@@ -616,8 +585,7 @@ public class Trash2TreasureController {
 	}
 
 
-	/* This method is invoked when the seller has submitted 
-	 * the details of the item he wants to update.
+	/** Modifies/ Updates an Item
 	 */
 	@RequestMapping("/UpdateThisItem/{userInfo}/{itemId}")
 	public ModelAndView updateThisItem(
@@ -660,10 +628,7 @@ public class Trash2TreasureController {
 
 	}
 
-	/* This method is invoked when the seller has submitted 
-	 * the details of the item he wants to update.
-	 */
-	
+	/** Updates the Items*/
 	@RequestMapping(value = "/UpdateEditedItem", method = RequestMethod.POST)
 	public ModelAndView updateEditedItem(HttpServletRequest req,
 			HttpServletResponse res, @ModelAttribute("itemBean") Item itemBean) {
@@ -733,9 +698,7 @@ public class Trash2TreasureController {
 		return mv;
 	}
 
-	/* This method is invoked when the seller wants to view the
-	 * items he has uploaded 
-	 */
+	/** Returns all the Items that should be displayed to a particular seller */
 	@RequestMapping(value = "/ViewMyItems/{userInfo}")
 	public ModelAndView viewSellerItems(@PathVariable("userInfo") String userInfo) {
 		if(! userInfo.contains("__")){
@@ -767,7 +730,6 @@ public class Trash2TreasureController {
 			return mv;
 		}
 
-		System.out.println("test: "+userInfo);
 		if (sellerItems == null || sellerItems.size() == 0) {
 			mv = new ModelAndView("Seller");
 			mv.addObject("msg", "You donot have any items in your list..!!");
@@ -776,7 +738,6 @@ public class Trash2TreasureController {
 		
 			mv.addObject("amountOwed","$"+amountOwed);
 		} else {
-			System.out.println("display seller items");
 			mv = new ModelAndView("DisplaySellerItems");
 			mv.addObject("items", sellerItems);
 
@@ -789,6 +750,9 @@ public class Trash2TreasureController {
 
 	}
 
+	/**
+	 * Displays all the items that should be displayed to all the users.
+	 */
 	@RequestMapping(value = "/ViewAllItems/{userInfo}")
 	public ModelAndView viewAllItems(HttpServletRequest req,
 			HttpServletResponse res,@PathVariable("userInfo") String userInfo){
@@ -842,6 +806,9 @@ public class Trash2TreasureController {
 		return mv;
 	}
 
+	/**
+	 * Return the items sorted.
+	 */
 	@RequestMapping(value = "/SortedItems", method = RequestMethod.POST)
 	public ModelAndView sortedItemsDisplay(HttpServletRequest req,
 			HttpServletResponse res) {
@@ -929,7 +896,9 @@ public class Trash2TreasureController {
 		return mv;
 	}
 
-	
+	/**
+	 * Sort the items for the buyer.
+	 */
 	@RequestMapping(value = "/SortedItemsBuyer", method = RequestMethod.POST)
 	public ModelAndView sortedItemsDisplayBuyer(HttpServletRequest req,
 			HttpServletResponse res) {
@@ -1004,29 +973,19 @@ public class Trash2TreasureController {
 
 		}
 
-		// fetch all items
-
 		mv.addObject("items", filteredItems);
-
-		//mv.addObject("userInfo", userInfo);
-		// to be computed
-		//mv.addObject("userIdentification", "verified");
 		return mv;
 	}
 
 	
-	/*
-	 * Admin functions
+	
+	/**
+	 * Approve the pending items of the admin
 	 */
-
 	@RequestMapping("/AdminApprovePendingItems/{userInfo}")
 	protected ModelAndView adminApprovePendingItems(HttpServletRequest req,
 			HttpServletResponse res,@PathVariable("userInfo") String userInfo){
 
-		//String userInfo = req.getParameter("userInfo");
-		System.out.println("in adminApprovePendingItems");
-		System.out.println("User Info: "+ userInfo);
-		
 		ModelAndView mv = new ModelAndView("Admin");
 
 		Trash2TreasureService service = new Trash2TreasureService();
@@ -1056,21 +1015,18 @@ public class Trash2TreasureController {
 		return mv;
 
 	}
-
+	
+	
+	/**
+	 * Admin approves the items
+	 */
 	@RequestMapping("/AdminApproveAnItem/{userInfo}/{itemId}")
 	public ModelAndView adminApprovePendingItem(HttpServletRequest req,
 			HttpServletResponse res, @PathVariable("itemId") String itemId,
 			@PathVariable("userInfo") String userInfo){
 
-		//String userInfo = req.getParameter("userInfo");
-		System.out.println("in adminApprovePendingItem");
-		System.out.println("User Info: "+ userInfo);
-		
-		// fetch all items of this user and send to this page
 		int id = Integer.parseInt(itemId);
-		// pass this id to dao for approving, i.e. status change to approved
 
-		
 		ModelAndView mv = null;
 		// fetch pending items
 		Trash2TreasureService service = new Trash2TreasureService();
@@ -1097,8 +1053,6 @@ public class Trash2TreasureController {
 			mv.addObject("items", pendingItems);
 
 		}
-
-		
 		mv.addObject("userInfo", userInfo);
 		// to be computed
 		mv.addObject("userIdentification", "verified");
@@ -1106,6 +1060,9 @@ public class Trash2TreasureController {
 
 	}
 
+	/**
+	 * Method invoked when the admin Sells a item.
+	 */
 	@RequestMapping("/AdminSaleEvent/{userInfo}")
 	protected ModelAndView adminSaleItem(HttpServletRequest req,
 			HttpServletResponse res,@PathVariable("userInfo") String userInfo){
@@ -1138,8 +1095,6 @@ public class Trash2TreasureController {
 			mv.addObject("items", approvedItems);
 
 		}
-
-		
 		mv.addObject("userInfo", userInfo);
 		// to be computed
 		mv.addObject("userIdentification", "verified");
@@ -1147,19 +1102,17 @@ public class Trash2TreasureController {
 
 	}
 
+	/**
+	 * Admin updates an item as sold
+	 */
 	@RequestMapping("/AdminSaleAnItem/{userInfo}/{itemId}")
 	public ModelAndView adminSaleThisItem(HttpServletRequest req,
 			HttpServletResponse res, @PathVariable("itemId") String itemId,
 			@PathVariable("userInfo") String userInfo){
-
-		//String userInfo = req.getParameter("userInfo");
-		System.out.println("in adminSaleThisItem");
-		System.out.println("User Info: "+ userInfo);
 		
 		// fetch all items of this user and send to this page
 		int itemMarkAsSold = Integer.parseInt(itemId);
 		// pass this id to dao for approving, i.e. status change to approved
-
 		
 		ModelAndView mv = null;
 		Trash2TreasureService service = new Trash2TreasureService();
@@ -1177,9 +1130,6 @@ public class Trash2TreasureController {
 			mv.addObject("userIdentification", "verified");
 			return mv;
 		}
-
-		
-
 		if (approvedItems==null || approvedItems.size() == 0) {
 			mv = new ModelAndView("Admin");
 			mv.addObject("msg", "All the items have been sold..!!");
@@ -1187,10 +1137,7 @@ public class Trash2TreasureController {
 			mv = new ModelAndView("SaleOfItems");
 			mv.addObject("items", approvedItems);
 			mv.addObject("msg", "Item marked as sold..!!");
-
 		}
-
-		
 		mv.addObject("userInfo", userInfo);
 		// to be computed
 		mv.addObject("userIdentification", "verified");
@@ -1198,14 +1145,13 @@ public class Trash2TreasureController {
 
 	}
 
+	/**
+	 * Items for the admin to view
+	 */
 	@RequestMapping("/AdminViewAllItems/{userInfo}")
 	protected ModelAndView adminViewAllItems(HttpServletRequest req,
 			HttpServletResponse res,@PathVariable("userInfo") String userInfo){
 
-		//String userInfo = req.getParameter("userInfo");
-		System.out.println("in adminViewAllItems");
-		System.out.println("User Info: "+ userInfo);
-		
 		ModelAndView mv = null;
 		Trash2TreasureService service = new Trash2TreasureService();
 		// fetch all items
@@ -1231,7 +1177,6 @@ public class Trash2TreasureController {
 			
 		}
 
-		
 		mv.addObject("userInfo", userInfo);
 		// to be computed
 		mv.addObject("userIdentification", "verified");
@@ -1239,6 +1184,9 @@ public class Trash2TreasureController {
 
 	}
 	
+	/**
+	 * Admin deletes an item when its not a valid one
+	 */
 	@RequestMapping("/AdminDeleteItem/{userInfo}")
 	protected ModelAndView adminDeleteItem(HttpServletRequest req,
 			HttpServletResponse res,@PathVariable("userInfo") String userInfo){
@@ -1271,8 +1219,6 @@ public class Trash2TreasureController {
 			mv.addObject("items", allItems);
 
 		}
-
-		
 		mv.addObject("userInfo", userInfo);
 		// to be computed
 		mv.addObject("userIdentification", "verified");
@@ -1285,15 +1231,10 @@ public class Trash2TreasureController {
 			HttpServletResponse res, @PathVariable("itemId") String itemId,
 			@PathVariable("userInfo") String userInfo){
 
-		//String userInfo = req.getParameter("userInfo");
-		System.out.println("in adminDeleteThisItem");
-		System.out.println("User Info: "+ userInfo);
-		
 		// fetch all items of this user and send to this page
 		int deleteItemId = Integer.parseInt(itemId);
 		// pass this id to dao for approving, i.e. status change to approved
 
-		
 		ModelAndView mv = null;
 		Trash2TreasureService service = new Trash2TreasureService();
 		List<Item> allItems = null;
@@ -1310,27 +1251,23 @@ public class Trash2TreasureController {
 			mv.addObject("userIdentification", "verified");
 			return mv;
 		}
-
-		
-
 		if (allItems==null || allItems.size() == 0) {
 			mv = new ModelAndView("Admin");
 			mv.addObject("msg", "There are no items in the system..!!");
 		} else {
 			mv = new ModelAndView("AdminDeleteItem");
 			mv.addObject("items", allItems);
-
 		}
 
-		
 		mv.addObject("userInfo", userInfo);
 		// to be computed
 		mv.addObject("userIdentification", "verified");
 		return mv;
+}
 
-	}
-
-	
+	/**
+	 * Admin settles an item
+	 */
 	@RequestMapping("/AdminSettleItems/{userInfo}")
 	public ModelAndView adminSettleItems(HttpServletRequest req,
 			HttpServletResponse res,
@@ -1369,17 +1306,18 @@ public class Trash2TreasureController {
 		mv.addObject("userIdentification", "verified");
 		return mv;
 
-	}	
+	}
+	
+	/**
+	 * Admin settles the seller
+	 */
 	@RequestMapping("AdminSettleSeller/{userInfo}/{sellerNUID}")
 	public ModelAndView adminSettleThisSeller(HttpServletRequest req,
 			HttpServletResponse res, @PathVariable("sellerNUID") String sellerNUID,
 			@PathVariable("userInfo") String userInfo){
 		Trash2TreasureService service = new Trash2TreasureService();
 		ModelAndView mv = null;
-		//String userInfo = req.getParameter("userInfo");
-		System.out.println("in adminSettleThisSeller");
-		System.out.println("User Info: "+ userInfo);
-		System.out.println("Seller NUID: "+ sellerNUID);
+	
 		List<Seller> settleTheseSellers = null;
 		try{
 			service.settleThisSeller(Long.valueOf(sellerNUID));
@@ -1422,20 +1360,20 @@ public class Trash2TreasureController {
 		return mv;
 		
 	}
+	
+	/**
+	 * Displays the admin summary
+	 */
 	@RequestMapping("AdminSummary/{userInfo}")
 	public ModelAndView adminSummary(HttpServletRequest req,
 			HttpServletResponse res,
 			@PathVariable("userInfo") String userInfo){
 		Trash2TreasureService service = new Trash2TreasureService();
 		ModelAndView mv = null;
-		//String userInfo = req.getParameter("userInfo");
-		System.out.println("in adminSettleThisSeller");
-		System.out.println("User Info: "+ userInfo);
+	
 		AdminSummary adminSummary = null;
 		try{
-			
 			adminSummary = service.getAdminSummary();
-			
 		}catch(Exception e){
 			e.printStackTrace();
 			mv = new ModelAndView("Admin");
@@ -1455,17 +1393,13 @@ public class Trash2TreasureController {
 		
 		return mv;
 	}
-	
-	
-	/*
-	 * Buyer functions
+	/**
+	 * View all the items of the Buyer
 	 */
-
 	@RequestMapping("/viewItemsBuyer")
 	protected ModelAndView buyerViewAllItems(HttpServletRequest req,
 			HttpServletResponse res){
-		
-		System.out.println("in buyerViewAllItems");
+
 		ModelAndView mv = null;
 
 		Trash2TreasureService service = new Trash2TreasureService();
@@ -1487,10 +1421,7 @@ public class Trash2TreasureController {
 			System.out.println("**************");
 			mv = new ModelAndView("viewItems");
 			mv.addObject("items", items);
-
 		}
-
 		return mv;
-
 	}
 }

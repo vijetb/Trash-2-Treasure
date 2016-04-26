@@ -31,12 +31,10 @@ public class Trash2TreasureService {
 	}
 
 	public boolean isUserAdmin(Login loginBean) {
-		// TODO Auto-generated method stub
 		return false;
 	}
 
 	public String getFirstName(Login loginBean) {
-		// TODO Auto-generated method stub
 		return null;
 	}
 
